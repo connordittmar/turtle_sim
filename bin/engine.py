@@ -2,16 +2,20 @@
 import sys, os
 import pygame
 import math
+import time
 
-from math import atan2, cos, sin
+from math import atan2, cos, sin, pi
 from pygame.locals import *
 from pygame.color import THECOLORS
 from types import Vector, Ship, InputKeys
 from physics import Physics, SurfaceDynamics
+from udp_helper import UDPComms
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 class Engine(object):
-    def __init__(self):
-        pass
+    def __init__(self,workers=8):
+        self.executor = ThreadPoolExecutor(max_workers=workers)
 
     def play(self):
         pygame.init()
@@ -26,6 +30,7 @@ class Engine(object):
         asv = Ship()
         physics = Physics()
         asv_dynamics = SurfaceDynamics()
+        udphandler = UDPComms(remoteport=8000,localport=8001)
         while not user_done:
 
             #Get User Input
@@ -69,11 +74,19 @@ class Engine(object):
             else:
                 asv.force = [0.0,0.0]
 
+            packet = self.executor.submit(udphandler.receive)
+            try:
+                returned = packet.result()
+                pwms = returned.split('$')[1].split('!')[0].split(',')
+                asv.force = [float(pwms[0]),float(pwms[1])]
+            except Exception as exc:
+                print('Exception: %s' % exc)
             # Run Physics Loop
             asv_dynamics.update_accelerations(asv) #updates asv.uv_ddot and asv.theta_ddot
             asv.sim_state(physics,dt_s) #integrates other vehicle states
-            print time_s,dt_s,  asv.uv_ddot, asv.uv_dot
 
+            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(asv.theta*2*pi/180.0),str(time.time()))
+            self.executor.submit(udphandler.send(vehicle_state))
             # Case for wall bounce (note: add to phyics class)
 
             pygame.draw.circle(display_surface, THECOLORS["red"], [40+int(4*asv.pos[0]),40+int(4*asv.pos[1])], 20, 1)
