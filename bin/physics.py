@@ -26,6 +26,17 @@ class Physics(object):
         theta = theta_old + theta_dot * dt
         return theta % (2*pi)
 
+    def pwm_to_force(self,pwm):
+        #Takes a PWM and converts to force output equivalent in Newtons
+        if pwm < 0.4 and pwm > -0.4:
+            force = 0.0
+            return force
+        force = 3.4913*abs(pwm**2) - 3.7931*abs(pwm) + 1.2773
+        if pwm < 0.0:
+            force = -force
+        return force
+
+
 class SurfaceDynamics(object):
     def __init__(self):
         pass

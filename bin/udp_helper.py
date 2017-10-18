@@ -3,7 +3,7 @@ import socket
 import time
 
 class UDPComms(object):
-    def __init__(self,ip='127.0.0.1',remoteport=8001,localport=8000):
+    def __init__(self,ip='127.0.0.1',remoteport=8001,localport=8000,timeout=.01):
         self.ip = ip
         self.remoteport = remoteport
         self.localport = localport
@@ -12,7 +12,7 @@ class UDPComms(object):
         self.sock_remote = socket.socket(socket.AF_INET,
                                     socket.SOCK_DGRAM)
         self.sock_remote.bind((self.ip,self.remoteport))
-        self.sock_remote.settimeout(1)
+        self.sock_remote.settimeout(timeout)
 
     def receive(self):
         now = time.time()

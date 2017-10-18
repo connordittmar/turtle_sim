@@ -74,18 +74,20 @@ class Engine(object):
             else:
                 asv.force = [0.0,0.0]
 
-            packet = self.executor.submit(udphandler.receive)
-            try:
-                returned = packet.result()
-                pwms = returned.split('$')[1].split('!')[0].split(',')
-                asv.force = [float(pwms[0]),float(pwms[1])]
-            except Exception as exc:
-                print('Exception: %s' % exc)
+                packet = self.executor.submit(udphandler.receive)
+                try:
+                    returned = packet.result()
+                    pwms = returned.split('$')[1].split('!')[0].split(',')
+                    asv.force = [physics.pwm_to_force(float(pwms[0])),physics.pwm_to_force(float(pwms[1]))]
+                    print asv.force
+                except Exception as exc:
+                    print('Exception: %s' % exc)
+                    pass
             # Run Physics Loop
             asv_dynamics.update_accelerations(asv) #updates asv.uv_ddot and asv.theta_ddot
             asv.sim_state(physics,dt_s) #integrates other vehicle states
 
-            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(asv.theta*2*pi/180.0),str(time.time()))
+            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(asv.theta*180.0/pi),str(time.time()))
             self.executor.submit(udphandler.send(vehicle_state))
             # Case for wall bounce (note: add to phyics class)
 
@@ -94,5 +96,6 @@ class Engine(object):
             pygame.draw.circle(display_surface, THECOLORS["blue"], offset, 2,0)
             #pygame.draw.circle(display_surface, planet.color, [planet.pos.x,planet.pos.y], planet.radius,1)
             time_s += dt_s
+            print gameclock.get_fps()
 
             pygame.display.flip()
