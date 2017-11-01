@@ -49,7 +49,7 @@ class Vector(object):
 
 class Ship(object):
 
-    def __init__(self,bu=.3,bv=.5,br=0.5,mass=1.99,j=0.9,z=0.14):
+    def __init__(self,bu=.3,bv=.5,br=0.07,mass=1.29,j=0.1161,z=0.1):
         self.uv_ddot = [0,0]
         self.uv_dot = [0,0]
         self.vel = [0,0]

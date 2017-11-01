@@ -64,25 +64,25 @@ class Engine(object):
 
             # If keys are down, input control commands
             if keys.w == 'D':
-                asv.force = [1.0,1.0]
+                pwms = [0.6,0.6]
             elif keys.s == 'D':
-                asv.force = [-1.0,-1.0]
+                pwms = [-0.6,-0.6]
             elif keys.a == 'D':
-                asv.force = [-1.0,1.0]
+                pwms = [-0.6,0.6]
             elif keys.d == 'D':
-                asv.force = [1.0,-1.0]
+                pwms = [0.6,-0.6]
             else:
-                asv.force = [0.0,0.0]
+                pwms = [0.0,0.0]
 
                 packet = self.executor.submit(udphandler.receive)
                 try:
                     returned = packet.result()
                     pwms = returned.split('$')[1].split('!')[0].split(',')
-                    asv.force = [physics.pwm_to_force(float(pwms[0])),physics.pwm_to_force(float(pwms[1]))]
-                    print asv.force
                 except Exception as exc:
                     print('Exception: %s' % exc)
                     pass
+            asv.force = [physics.pwm_to_force(float(pwms[0]),'left'),physics.pwm_to_force(float(pwms[1]),'right')]
+            print asv.force
             # Run Physics Loop
             asv_dynamics.update_accelerations(asv) #updates asv.uv_ddot and asv.theta_ddot
             asv.sim_state(physics,dt_s) #integrates other vehicle states
