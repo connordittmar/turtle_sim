@@ -3,7 +3,7 @@ import sys, os
 import pygame
 import math
 import time
-
+import numpy as np
 from math import atan2, cos, sin, pi
 from pygame.locals import *
 from pygame.color import THECOLORS
@@ -31,6 +31,7 @@ class Engine(object):
         physics = Physics()
         asv_dynamics = SurfaceDynamics()
         udphandler = UDPComms(remoteport=8000,localport=8001)
+        i = 0
         while not user_done:
 
             #Get User Input
@@ -79,23 +80,27 @@ class Engine(object):
                     returned = packet.result()
                     pwms = returned.split('$')[1].split('!')[0].split(',')
                 except Exception as exc:
-                    print('Exception: %s' % exc)
                     pass
             asv.force = [physics.pwm_to_force(float(pwms[0]),'left'),physics.pwm_to_force(float(pwms[1]),'right')]
-            print asv.force
+            if i ==20:
+                print asv.pos
+                i =0
+            i += 1
             # Run Physics Loop
             asv_dynamics.update_accelerations(asv) #updates asv.uv_ddot and asv.theta_ddot
             asv.sim_state(physics,dt_s) #integrates other vehicle states
 
-            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(asv.theta*180.0/pi),str(time.time()))
+            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(round(asv.theta*180.0/pi,3)),str(time.time()))
             self.executor.submit(udphandler.send(vehicle_state))
             # Case for wall bounce (note: add to phyics class)
-
-            pygame.draw.circle(display_surface, THECOLORS["red"], [40+int(4*asv.pos[0]),40+int(4*asv.pos[1])], 20, 1)
-            offset = [40+int(4*asv.pos[0] + 20*cos(asv.theta)), 40+int(4*asv.pos[1] + 20*sin(asv.theta))]
+            scale = 40
+            wps = np.array([[10,10],[10,15],[15,15],[15,10]])
+            wps = wps*scale
+            pygame.draw.polygon(display_surface, THECOLORS["green"],wps.tolist(),5)
+            pygame.draw.circle(display_surface, THECOLORS["red"], [int(scale*asv.pos[0]),int(scale*asv.pos[1])], 20, 1)
+            offset = [int(scale*asv.pos[0] + 20*cos(asv.theta)), int(scale*asv.pos[1] + 20*sin(asv.theta))]
             pygame.draw.circle(display_surface, THECOLORS["blue"], offset, 2,0)
             #pygame.draw.circle(display_surface, planet.color, [planet.pos.x,planet.pos.y], planet.radius,1)
             time_s += dt_s
-            print gameclock.get_fps()
 
             pygame.display.flip()
