@@ -90,7 +90,7 @@ class Engine(object):
             asv_dynamics.update_accelerations(asv) #updates asv.uv_ddot and asv.theta_ddot
             asv.sim_state(physics,dt_s) #integrates other vehicle states
 
-            vehicle_state = "${0},{1},{2},{3}".format(str(asv.pos[0]),str(asv.pos[1]),str(round(asv.theta*180.0/pi,3)),str(time.time()))
+            vehicle_state = "${0},{1},{2},{3}".format(str(round(asv.pos[0],3)),str(round(asv.pos[1],3)),str(round(asv.theta*180.0/pi,3)),str(round(time.time(),3)))
             self.executor.submit(udphandler.send(vehicle_state))
             # Case for wall bounce (note: add to phyics class)
             scale = 40
